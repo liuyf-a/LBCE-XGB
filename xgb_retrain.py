@@ -181,11 +181,11 @@ def PAAC(pep):
 
 def bertfea(file):
     feature = []
-    with open(file, 'r') as f:
-        for line in f:
-            line = line.split(',')
-            feature.append([float(x) for x in line[1:130]])
-    return feature
+    import joblib
+    idx_sorted = joblib.load('./shap/CLS.np')
+    x_test = np.array(pd.read_csv(file,header=None,index_col=None,usecols=[i for i in range(1,769)]))
+    return x_test[:, idx_sorted[:130]]
+
 
 def QSO(pep):
     feature = []
@@ -271,11 +271,10 @@ def combinefeature(pep, featurelist, dataset):
         fname = fname + name 
 
     if 'bertfea' in featurelist:
-        f_bertfea = np.array(bertfea('./shap/B-cell/ibce/tr_CLS_150.txt'))
+        f_bertfea = np.array(bertfea('./datasets/BERT_feature/training/CLS_fea.txt'))
         a = np.column_stack((a, f_bertfea))
         fname = fname + ['bertfea']*len(f_bertfea)
         
-
     return a[:,1:], fname, vocab_name
 
 
@@ -284,7 +283,7 @@ def run_training(pos, neg, dataset):
     pickle_info={}
     #print(pep_combined)
     # aap aat dpc aac paac qso ctd
-    featurelist = ['aap']
+    featurelist = ['aaa', 'aap', 'aat', 'bertfea']
     print(featurelist)
     pickle_info['featurelist'] = featurelist
     features, fname, vocab = combinefeature(pep_combined, featurelist, dataset) # 'aap', 'aat', 'aac'
@@ -385,23 +384,19 @@ def train(peptides, features, target, pickle_info, dataset):
     y = np.array(target)
     cv = StratifiedKFold(n_splits=5)
     model = gridsearch(x, y, cv)
-    # aapdic = readAAP("./training/"+dataset+"/aap-general.txt.normal")
-    aapdic = readAAP("./models/ibce/aap-general.txt.normal")
-    # aatdic = readAAT("./training/"+dataset+"/aat-general.txt.normal")
-    aatdic = readAAT("./models/ibce/aat-general.txt.normal")
+    aapdic = readAAP("./datasets/aap-general.txt.normal")
+    aatdic = readAAT("./datasets/ibce/aat-general.txt.normal")
     pickle_info ['aap'] = aapdic
     pickle_info ['aat'] = aatdic
     pickle_info ['scaling'] = scaling
     pickle_info ['model'] = model
     pickle_info ['training_features'] = features
     pickle_info ['training_targets'] = y
-    #pickle.dump(pickle_info, open("./models/xgb-"+dataset+"aac-aap-aat.pickle", "wb"))
+    pickle.dump(pickle_info, open("./models/xgb-"+dataset+"aac-aap-aat-bertfea.pickle", "wb"))
     print("Best parameters: ", model.best_params_)
     print("Best accuracy: :", model.best_score_)
     predict = model.best_estimator_.predict_proba(x)
     print(predict[:, 1])
-    newdf = pd.DataFrame({'aap':predict[:, 1]})
-    newdf.to_csv('aap.csv')
 
     cv_accracy = model.cv_results_['mean_test_ACC'][model.best_index_]
     cv_auprc = model.cv_results_['mean_test_AUPRC'][model.best_index_]

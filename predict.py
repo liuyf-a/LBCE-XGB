@@ -241,8 +241,7 @@ def combinefeature(pep, featurelist, dataset):
    
         
     if 'bertfea' in featurelist:
-        #f_bertfea = np.array(bertfea('./bertfea/iBCE-EL_independent/ibce_ind_use_fea.txt'))
-        f_bertfea = np.array(bertfea('./shap/B-cell/blind387/tr_CLS.txt'))
+        f_bertfea = np.array(bertfea('./datasets/BERT_feature/independent/CLS_fea.txt'))
         a = np.column_stack((a, f_bertfea))
         fname = fname + ['bertfea']*len(f_bertfea)       
 

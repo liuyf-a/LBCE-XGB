@@ -184,7 +184,7 @@ def bertfea(file):
     import joblib
     idx_sorted = joblib.load('./shap/CLS.np')
     x_test = np.array(pd.read_csv(file,header=None,index_col=None,usecols=[i for i in range(1,769)]))
-    return x_test[:, idx_sorted[:130]]
+    return x_test[:, idx_sorted[1:131]]
 
 
 def QSO(pep):
